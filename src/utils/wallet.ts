@@ -40,7 +40,7 @@ export const generateNewWallet = ({ coinType }: { coinType: string }): walletTyp
       JSON.stringify([
         ...wallets,
         {
-          secret,
+          secret: Buffer.from(secret).toString('hex'),
           public: publicKey,
         }
       ])
@@ -50,7 +50,7 @@ export const generateNewWallet = ({ coinType }: { coinType: string }): walletTyp
       "wallets",
       JSON.stringify([
         {
-          secret,
+          secret: Buffer.from(secret).toString('hex'),
           public: publicKey,
         },
       ])
