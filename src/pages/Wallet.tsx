@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
-import { generateNewWallet } from "../utils/wallet";
+import { addNewWallet, generateNewWallet } from "../utils/wallet";
 import AddressCard from "../components/AddressCard";
 
 const SecretPhrasePopUp = ({
@@ -70,7 +70,13 @@ const Wallet = () => {
     setMnemonic(wallet.mnemonic)
   };
 
-  const addWallet = () => {};
+  const addWallet = () => {
+
+    const wallet = addNewWallet({coinType: "501"})
+
+    if(wallet)
+    setWallets(wallet.wallets)
+  };
 
   const deleteWallet = () => {
     localStorage.removeItem("mnemonic");
@@ -93,7 +99,7 @@ const Wallet = () => {
         {mnemonic ? (
           <>
             <button
-              onClick={() => createNewWallet()}
+              onClick={() => addWallet()}
               className="px-6 py-2 bg-green-400 rounded-4xl font-bold text-black cursor-pointer transition hover:scale-105 text-sm"
             >
               Add wallet
@@ -134,7 +140,7 @@ const Wallet = () => {
 
       <div className="w-full px-10 space-y-3.5">
         <p className="text-3xl">Wallets</p>
-        <div className="w-full flex items-center  space-y-7">
+        <div className="w-full flex flex-col space-y-7">
 
             {
                 wallets.map((wallet,index) => (

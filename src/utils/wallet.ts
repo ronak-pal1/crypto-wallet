@@ -8,8 +8,11 @@ type walletType = {
   mnemonic: string;
   secret: string;
   public: string;
-}
-
+  wallets: {
+    secret: string;
+    public: string;
+  }[];
+};
 
 /* Coin Type
 
@@ -18,7 +21,11 @@ type walletType = {
   For Bitcoin: 0'
 
 */
-export const generateNewWallet = ({ coinType }: { coinType: string }): walletType => {
+export const generateNewWallet = ({
+  coinType,
+}: {
+  coinType: string;
+}): walletType => {
   const mnemonic = generateMnemonic();
 
   window.localStorage.setItem("mnemonic", mnemonic);
@@ -33,37 +40,74 @@ export const generateNewWallet = ({ coinType }: { coinType: string }): walletTyp
 
   const walletsStr = localStorage.getItem("wallets");
 
+  let newWallets: { public: string; secret: string }[] = [];
+
   if (walletsStr) {
     const wallets: [] = JSON.parse(walletsStr);
-    window.localStorage.setItem(
-      "wallets",
-      JSON.stringify([
-        ...wallets,
-        {
-          secret: Buffer.from(secret).toString('hex'),
-          public: publicKey,
-        }
-      ])
-    );
+
+    newWallets = [
+      ...wallets,
+      {
+        secret: Buffer.from(secret).toString("hex"),
+        public: publicKey,
+      },
+    ];
   } else {
-    window.localStorage.setItem(
-      "wallets",
-      JSON.stringify([
-        {
-          secret: Buffer.from(secret).toString('hex'),
-          public: publicKey,
-        },
-      ])
-    );
+    newWallets = [
+      {
+        secret: Buffer.from(secret).toString("hex"),
+        public: publicKey,
+      },
+    ];
   }
 
+  window.localStorage.setItem("wallets", JSON.stringify(newWallets));
 
   return {
     mnemonic,
-    secret: Buffer.from(secret).toString('hex'),
-    public:publicKey,
-  }
+    secret: Buffer.from(secret).toString("hex"),
+    public: publicKey,
+    wallets: newWallets,
+  };
 };
 
+export const addNewWallet = ({
+  coinType,
+}: {
+  coinType: string;
+}): walletType | void => {
+  const mnemonic = localStorage.getItem("mnemonic");
 
+  if (!mnemonic) return;
 
+  const walletsStr = localStorage.getItem("wallets");
+
+  if (!walletsStr) return;
+
+  const wallets: [] = JSON.parse(walletsStr);
+
+  const seed = mnemonicToSeedSync(mnemonic);
+
+  const path = `m/44'/${coinType}'/${wallets.length}'/0'`;
+
+  const derivedSeed = derivePath(path, seed.toString("hex")).key;
+  const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
+  const publicKey = Keypair.fromSecretKey(secret).publicKey.toBase58();
+
+  const newWallets = [
+    ...wallets,
+    {
+      secret: Buffer.from(secret).toString("hex"),
+      public: publicKey,
+    },
+  ];
+
+  window.localStorage.setItem("wallets", JSON.stringify(newWallets));
+
+  return {
+    mnemonic,
+    secret: Buffer.from(secret).toString("hex"),
+    public: publicKey,
+    wallets: newWallets,
+  };
+};
